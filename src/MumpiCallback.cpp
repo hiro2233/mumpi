@@ -39,7 +39,7 @@ void MumpiCallback::audio(int target,
                           int sequenceNumber,
                           int16_t *pcm_data,
                           uint32_t pcm_data_size) {
-    printf("Received audio: pcm_data_size: %d target: %d sesseionID: %d sequence: %d\n", pcm_data_size, target, sessionId, sequenceNumber);
+    //printf("Received audio: pcm_data_size: %d target: %d sesseionID: %d sequence: %d\n", pcm_data_size, target, sessionId, sequenceNumber);
     //printf("\nMumpiCallback Received audio: pcm_data_size: %d\n", pcm_data_size);
     if(pcm_data != NULL) {
         _out_buf->push(pcm_data, 0, pcm_data_size);
