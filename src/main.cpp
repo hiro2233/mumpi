@@ -13,9 +13,9 @@
 #include "MumpiCallback.hpp"
 #include "RingBuffer.hpp"
 
-int sample_rate = 48000;
+int sample_rate = 24000;
 const int NUM_CHANNELS = 1;
-const int FRAMES_PER_BUFFER = 512;
+const int FRAMES_PER_BUFFER = 1024;
 
 static log4cpp::Appender *appender = new log4cpp::OstreamAppender("console", &std::cout);
 static log4cpp::Category& logger = log4cpp::Category::getRoot();
@@ -205,9 +205,9 @@ int main(int argc, char *argv[]) {
 		{ "voice-hold", required_argument, NULL, 'i'},
 		{ NULL, 0, NULL, 0 }
 	};
-	double output_delay = -1.0;
+	double output_delay = 0.2;
 	double vox_threshold = -90.0;	// dB
-	std::chrono::duration<double> voice_hold_interval(0.050);	// 50 ms
+	std::chrono::duration<double> voice_hold_interval(0.05);	// 50 ms
 
 	// init logger
 	appender->setLayout(new log4cpp::BasicLayout());
@@ -281,17 +281,17 @@ int main(int argc, char *argv[]) {
 	}
 
 	// check for valid sample rate
-	if(sample_rate != 48000 && sample_rate != 24000 && sample_rate != 12000) {
+	if(sample_rate != 48000 && sample_rate != 24000 && sample_rate != 16000) {
 		logger.error("--sample-rate option must be 12000, 24000, or 48000");
 		exit(-1);
 	}
 
-	logger.info("Server:        %s", server.c_str());
-	logger.info("Username:      %s", username.c_str());
-	logger.info("delay:         %f", output_delay);
-	logger.info("sample rate    %d", sample_rate);
-	logger.info("vox threshold  %f", vox_threshold);
-	logger.info("voice hold interval %f", voice_hold_interval);
+	printf("Server:        %s\n", server.c_str());
+	printf("Username:      %s\n", username.c_str());
+	printf("delay:         %f\n", output_delay);
+	printf("sample rate    %d\n", sample_rate);
+	printf("vox threshold  %f\n", vox_threshold);
+	printf("voice hold interval %f\n\n", voice_hold_interval);
 
 	// logger.info("Starting in 5 seconds...");
 	// std::this_thread::sleep_for(std::chrono::seconds(5));
@@ -316,7 +316,7 @@ int main(int argc, char *argv[]) {
 	PaStreamParameters output_parameters;
 
 	// set ring buffer size to about 500ms
-	const size_t MAX_SAMPLES = nextPowerOf2(0.5 * sample_rate * NUM_CHANNELS);
+	const size_t MAX_SAMPLES = nextPowerOf2(4 * sample_rate * NUM_CHANNELS);
 	data.rec_buf = std::make_shared<RingBuffer<int16_t>>(MAX_SAMPLES);
 	data.out_buf = std::make_shared<RingBuffer<int16_t>>(MAX_SAMPLES);
 
@@ -327,10 +327,11 @@ int main(int argc, char *argv[]) {
 	}
 	inputParameters.channelCount = NUM_CHANNELS;
 	inputParameters.sampleFormat = paInt16;
-	inputParameters.suggestedLatency = Pa_GetDeviceInfo(inputParameters.device)->defaultLowInputLatency;
+	inputParameters.suggestedLatency = 0.2;//Pa_GetDeviceInfo(inputParameters.device)->defaultLowInputLatency;
 	inputParameters.hostApiSpecificStreamInfo = NULL;
 
 	logger.info("inputParameters.suggestedLatency: %.4f", inputParameters.suggestedLatency);
+    printf("inputParameters.suggestedLatency: %.4f\n", inputParameters.suggestedLatency);
 
 	err = Pa_OpenStream(&input_stream,         // the input stream
 						&inputParameters,      // input params
@@ -342,6 +343,7 @@ int main(int argc, char *argv[]) {
 						&data);                // data pointer
 
 	logger.info("defaultHighOutputLatency: %.4f", Pa_GetDeviceInfo(inputParameters.device)->defaultHighOutputLatency);
+    printf("defaultHighOutputLatency: %.4f\n\n", Pa_GetDeviceInfo(inputParameters.device)->defaultHighOutputLatency);
 
 	if(err != paNoError) {
 	    logger.error("Failed to open input stream: %s", Pa_GetErrorText(err));
@@ -362,6 +364,7 @@ int main(int argc, char *argv[]) {
 	output_parameters.hostApiSpecificStreamInfo = NULL;
 
 	logger.info("output_parameters.suggestedLatency: %.4f", output_parameters.suggestedLatency);
+    printf("output_parameters.suggestedLatency: %.4f\n", output_parameters.suggestedLatency);
 
 	err = Pa_OpenStream(&output_stream,		// the output stream
 						NULL, 				// input params
@@ -373,6 +376,7 @@ int main(int argc, char *argv[]) {
 						&data);				// data pointer
 
 	logger.info("defaultHighOutputLatency: %.4f", Pa_GetDeviceInfo(output_parameters.device)->defaultHighOutputLatency);
+    printf("defaultHighOutputLatency: %.4f\n\n", Pa_GetDeviceInfo(output_parameters.device)->defaultHighOutputLatency);
 
 	if(err != paNoError) {
 		logger.error("Failed to open output stream: %s", Pa_GetErrorText(err));
@@ -408,11 +412,12 @@ int main(int argc, char *argv[]) {
 		while(!sig_caught) {
 			try {
 				logger.info("Connecting to %s", server.c_str());
-				mum.connect(server, 64738, username, password);
+				mum.connect(server, 1234, username, password);
 				mum.run();
 			} catch (mumlib::TransportException &exp) {
 				logger.error("TransportException: %s.", exp.what());
 				logger.error("Attempting to reconnect in 5 s.");
+                mum.disconnect();
 				std::this_thread::sleep_for(std::chrono::seconds(5));
 			}
 		}
@@ -426,7 +431,7 @@ int main(int argc, char *argv[]) {
 		// Opus can encode frames of 2.5, 5, 10, 20, 40, or 60 ms
 		// the Opus RFC 6716 recommends using 20ms frame sizes
 		// so at 48k sample rate, 20ms is 960 samples
-		const int OPUS_FRAME_SIZE = (sample_rate / 1000.0)*20.0;
+		const int OPUS_FRAME_SIZE = (sample_rate / 1000.0)*60;
 
 		logger.info("OPUS_FRAME_SIZE: %d", OPUS_FRAME_SIZE);
 
@@ -463,7 +468,7 @@ int main(int argc, char *argv[]) {
 					if(rms > 0.0)
 						db = 20.0 * std::log10(rms);
 
-					logger.info("Recorded voice dB: %.2f", db);
+					//logger.notice("Recorded voice dB: %.2f", db);
 
 					if(!first_run_flag) {
 						now = std::chrono::steady_clock::now();
@@ -510,9 +515,11 @@ int main(int argc, char *argv[]) {
 	///////////////////////////
 	// clean up mumble library
 	///////////////////////////
-	logger.info("Disconnecting...");
+	printf("Disconnecting...\n");
+    mum.disconnect();
+    sleep(5);
+    input_consumer_thread.detach();
 	input_consumer_thread.join();
-	mum.disconnect();
 	mumble_thread.join();
 
 	///////////////////////////
