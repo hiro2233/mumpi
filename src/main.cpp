@@ -30,6 +30,7 @@ static bool input_consumer_thread_run_flag = true;
  */
 static void sigHandler(int signal) {
 	logger.info("caught signal %d", signal);
+    printf("\ncaught signal %d\n", signal);
 	sig_caught = signal;
 }
 
@@ -206,7 +207,7 @@ int main(int argc, char *argv[]) {
 		{ NULL, 0, NULL, 0 }
 	};
 	double output_delay = 0.2;
-	double vox_threshold = -90.0;	// dB
+	double vox_threshold = -70.0;	// dB
 	std::chrono::duration<double> voice_hold_interval(0.05);	// 50 ms
 
 	// init logger
@@ -417,9 +418,9 @@ int main(int argc, char *argv[]) {
 			} catch (mumlib::TransportException &exp) {
 				logger.error("TransportException: %s.", exp.what());
 				logger.error("Attempting to reconnect in 5 s.");
-                mum.disconnect();
 				std::this_thread::sleep_for(std::chrono::seconds(5));
 			}
+            //mum.disconnect();
 		}
 	});
 
@@ -479,7 +480,7 @@ int main(int argc, char *argv[]) {
 							voice_hold_flag = false;
 					}
 
-					if(db >= vox_threshold || voice_hold_flag)	{ // only tx if vox threshold met
+					if(db > vox_threshold || voice_hold_flag)	{ // only tx if vox threshold met
 						mum.sendAudioData(out_buf, OPUS_FRAME_SIZE);
 						if(!voice_hold_flag) {
 							start = std::chrono::steady_clock::now();
@@ -496,6 +497,7 @@ int main(int argc, char *argv[]) {
 
 	// init signal handler
 	struct sigaction action;
+    memset(&action, 0, sizeof(struct sigaction));
 	action.sa_handler = sigHandler;
 	action.sa_flags = 0;
 	sigemptyset(&action.sa_mask);
@@ -516,7 +518,7 @@ int main(int argc, char *argv[]) {
 	// clean up mumble library
 	///////////////////////////
 	printf("Disconnecting...\n");
-    mum.disconnect();
+    //mum.disconnect();
     sleep(5);
     input_consumer_thread.detach();
 	input_consumer_thread.join();
