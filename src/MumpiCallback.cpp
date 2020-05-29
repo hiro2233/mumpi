@@ -60,7 +60,7 @@ void MumpiCallback::textMessage(uint32_t actor,
                                 std::vector<uint32_t> tree_id,
                                 std::string message) {
     _logger.info("Received text message: %s", message.c_str());
-    printf("Received text message: %s actor: %lu session: %lu channel: %lu tree: %lu\n", message.c_str(), actor, session.data(), channel_id.at(0), tree_id.data());
+    printf("Received text message: %s actor: %lu session: %lu channel: %lu tree: %lu\n", message.c_str(), actor, session.size(), channel_id.size(), tree_id.size());
     //mumlib::BasicCallback::textMessage(actor, session, channel_id, tree_id, message);
     //mum->sendTextMessage("someone said: " + message);
 
