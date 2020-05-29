@@ -406,23 +406,24 @@ int main(int argc, char *argv[]) {
 	MumpiCallback mumble_callback(data.out_buf);
 	mumlib::MumlibConfiguration conf;
 	conf.opusEncoderBitrate = sample_rate;
-	mumlib::Mumlib mum(mumble_callback, conf);
-	mumble_callback.mum = &mum;
 
 	std::thread mumble_thread([&]() {
 		while(!sig_caught) {
 			try {
-				logger.info("Connecting to %s", server.c_str());
+				logger.warn("Connecting to %s", server.c_str());
+                mumlib::Mumlib mum(mumble_callback, conf);
+                mumble_callback.mum = &mum;
 				mum.connect(server, 1234, username, password);
 				mum.run();
 			} catch (mumlib::TransportException &exp) {
-				logger.error("TransportException: %s.", exp.what());
+				logger.error("TransportException main: %s.", exp.what());
 				logger.error("Attempting to reconnect in 5 s.");
 				std::this_thread::sleep_for(std::chrono::seconds(5));
 			}
-            //mum.disconnect();
 		}
 	});
+
+    std::this_thread::sleep_for(std::chrono::seconds(1));
 
 	std::thread input_consumer_thread([&]() {
 		// consumes the data that the input audio thread receives and sends it
@@ -454,7 +455,7 @@ int main(int argc, char *argv[]) {
 				// if we have just transmitted
 
 				// do a bulk get and send it through mumble client
-				if(mum.getConnectionState() == mumlib::ConnectionState::CONNECTED) {
+				if(mumble_callback.mum->getConnectionState() == mumlib::ConnectionState::CONNECTED) {
 					data.rec_buf->top(out_buf, 0, OPUS_FRAME_SIZE);
 
 					// compute RMS of sample window
@@ -481,7 +482,7 @@ int main(int argc, char *argv[]) {
 					}
 
 					if(db > vox_threshold || voice_hold_flag)	{ // only tx if vox threshold met
-						mum.sendAudioData(out_buf, OPUS_FRAME_SIZE);
+						mumble_callback.mum->sendAudioData(out_buf, OPUS_FRAME_SIZE);
 						if(!voice_hold_flag) {
 							start = std::chrono::steady_clock::now();
 							first_run_flag = false;
