@@ -13,7 +13,7 @@
 #include "MumpiCallback.hpp"
 #include "RingBuffer.hpp"
 
-int sample_rate = 24000;
+int sample_rate = 16000;
 const int NUM_CHANNELS = 1;
 const int FRAMES_PER_BUFFER = 1024;
 
@@ -206,9 +206,9 @@ int main(int argc, char *argv[]) {
 		{ "voice-hold", required_argument, NULL, 'i'},
 		{ NULL, 0, NULL, 0 }
 	};
-	double output_delay = 0.2;
+	double output_delay = 0.02;
 	double vox_threshold = -70.0;	// dB
-	std::chrono::duration<double> voice_hold_interval(0.05);	// 50 ms
+	std::chrono::duration<double> voice_hold_interval(0.03);	// 50 ms
 
 	// init logger
 	appender->setLayout(new log4cpp::BasicLayout());
@@ -307,7 +307,7 @@ int main(int argc, char *argv[]) {
 		exit(-1);
 	}
 
-	logger.info(Pa_GetVersionText());
+	logger.warn(Pa_GetVersionText());
 
 	// init audio I/O streams
 	PaStream *input_stream;
@@ -328,7 +328,7 @@ int main(int argc, char *argv[]) {
 	}
 	inputParameters.channelCount = NUM_CHANNELS;
 	inputParameters.sampleFormat = paInt16;
-	inputParameters.suggestedLatency = 0.2;//Pa_GetDeviceInfo(inputParameters.device)->defaultLowInputLatency;
+	inputParameters.suggestedLatency = 0.02;//Pa_GetDeviceInfo(inputParameters.device)->defaultLowInputLatency;
 	inputParameters.hostApiSpecificStreamInfo = NULL;
 
 	logger.info("inputParameters.suggestedLatency: %.4f", inputParameters.suggestedLatency);
@@ -418,12 +418,25 @@ int main(int argc, char *argv[]) {
 			} catch (mumlib::TransportException &exp) {
 				logger.error("TransportException main: %s.", exp.what());
 				logger.error("Attempting to reconnect in 5 s.");
+                logger.warn("Connection State: %d", (uint8_t)mumble_callback.mum->getConnectionState());
 				std::this_thread::sleep_for(std::chrono::seconds(5));
 			}
 		}
 	});
 
     std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    std::vector<mumlib::MumbleUser> mumuser = mumble_callback.mum->getListAllUser();
+    for(int i = 0; i < mumuser.size(); i++) {
+        //if(mumuser[i].name == name) {
+            printf("User: %s id: %d\n", mumuser[i].name.c_str(), mumuser[i].sessionId);
+        //}
+    }
+
+    int error;
+    //mumble_callback.mum->joinChannel("Lobby");
+    //mumble_callback.mum->sendVoiceTarget(0, mumlib::VoiceTargetType::CHANNEL, 1);
+    //mumble_callback.mum->sendVoiceTarget(0, mumlib::VoiceTargetType::USER, 1);
 
 	std::thread input_consumer_thread([&]() {
 		// consumes the data that the input audio thread receives and sends it
@@ -433,15 +446,19 @@ int main(int argc, char *argv[]) {
 		// Opus can encode frames of 2.5, 5, 10, 20, 40, or 60 ms
 		// the Opus RFC 6716 recommends using 20ms frame sizes
 		// so at 48k sample rate, 20ms is 960 samples
-		const int OPUS_FRAME_SIZE = (sample_rate / 1000.0)*60;
+		const int OPUS_FRAME_SIZE = (sample_rate / 1000.0)*20;
 
-		logger.info("OPUS_FRAME_SIZE: %d", OPUS_FRAME_SIZE);
+		logger.warn("OPUS_FRAME_SIZE: %d", OPUS_FRAME_SIZE);
 
 		std::chrono::steady_clock::time_point start;
 		std::chrono::steady_clock::time_point now;
 		bool voice_hold_flag = false;
 		bool first_run_flag = true;
 		int16_t *out_buf = new int16_t[MAX_SAMPLES];
+
+        int cnt = 0;
+        bool sw = false;
+
 		while(!sig_caught) {
 			if(!data.rec_buf->isEmpty() && data.rec_buf->getRemaining() >= OPUS_FRAME_SIZE) {
 
@@ -472,7 +489,7 @@ int main(int argc, char *argv[]) {
 
 					//logger.notice("Recorded voice dB: %.2f", db);
 
-					if(!first_run_flag) {
+					if (!first_run_flag) {
 						now = std::chrono::steady_clock::now();
 						auto duration = now - start;
 						if(duration < voice_hold_interval)
@@ -481,8 +498,10 @@ int main(int argc, char *argv[]) {
 							voice_hold_flag = false;
 					}
 
-					if(db > vox_threshold || voice_hold_flag)	{ // only tx if vox threshold met
-						mumble_callback.mum->sendAudioData(out_buf, OPUS_FRAME_SIZE);
+					if (db > vox_threshold || voice_hold_flag) { // only tx if vox threshold met
+                        if ((out_buf != NULL) && (sw)) {
+                            mumble_callback.mum->sendAudioDataTarget(0, out_buf, OPUS_FRAME_SIZE);
+                        }
 						if(!voice_hold_flag) {
 							start = std::chrono::steady_clock::now();
 							first_run_flag = false;
@@ -491,6 +510,11 @@ int main(int argc, char *argv[]) {
 				}
 			} else {
 				std::this_thread::sleep_for(std::chrono::milliseconds(20));
+                if (cnt < 250) {
+                    cnt++;
+                } else {
+                    sw = true;
+                }
 			}
 		}
 		delete[] out_buf;
