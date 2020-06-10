@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<UrusStudio_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="mumpi" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Debug">
+				<Option output="bin/Debug/mumpi" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Debug/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-g" />
+				</Compiler>
+				<Linker>
+					<Add directory="deps/mumlib/bin/Debug" />
+				</Linker>
+			</Target>
+			<Target title="Release">
+				<Option output="bin/Release/mumpi" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Release/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-march=pentium4" />
+					<Add option="-flto" />
+					<Add option="-O2" />
+				</Compiler>
+				<Linker>
+					<Add option="-flto" />
+					<Add option="-s" />
+					<Add directory="deps/mumlib/bin/Release" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-Wall" />
+			<Add option="-std=c++11" />
+			<Add option="-DLOG4CPP_FIX_ERROR_COLLISION=1 -D__USE_W32_SOCKETS" />
+			<Add directory="include" />
+			<Add directory="deps/mumlib/include" />
+			<Add directory="$(#URUSPATH)/home/urus/boost_1_72_0" />
+		</Compiler>
+		<Linker>
+			<Add option="-static-libstdc++" />
+			<Add option="-static-libgcc" />
+			<Add option="-static" />
+			<Add library="log4cpp" />
+			<Add library="mumlib" />
+			<Add library="portaudio.dll" />
+			<Add library="ws2_32" />
+			<Add library="ssl" />
+			<Add library="crypto" />
+			<Add library="protobuf" />
+			<Add library="opus" />
+			<Add library="speexdsp" />
+			<Add library="z" />
+		</Linker>
+		<Unit filename="include/EmptyBufferException.hpp" />
+		<Unit filename="include/MumpiCallback.hpp" />
+		<Unit filename="include/RingBuffer.hpp" />
+		<Unit filename="src/MumpiCallback.cpp" />
+		<Unit filename="src/RingBuffer.cpp" />
+		<Unit filename="src/main.cpp" />
+		<Extensions>
+			<code_completion />
+			<envvars />
+			<debugger />
+			<lib_finder disable_auto="1" />
+		</Extensions>
+	</Project>
+</UrusStudio_project_file>
