@@ -15,9 +15,19 @@ if (CMAKE_VERSION VERSION_LESS "3.1")
 endif ()
 set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 
+if (MSYS)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -DLOG4CPP_FIX_ERROR_COLLISION=1 -D__USE_W32_SOCKETS")
+endif ()
+
+INCLUDE(FindPkgConfig)
+find_package(PkgConfig REQUIRED)
+
 # INCLUDES
 include_directories(include)
 include_directories("${PROJECT_SOURCE_DIR}/deps/mumlib/include")
+if (MSYS)
+include_directories(~/boost_1_72_0)
+endif ()
 
 # SOURCES
 #Can manually add the sources using the set command as follows:
@@ -32,11 +42,11 @@ target_link_libraries(mumpi mumlib)
 
 # TESTING
 
-enable_testing()
-add_subdirectory("${PROJECT_SOURCE_DIR}/deps/googletest")
+#enable_testing()
+#add_subdirectory("${PROJECT_SOURCE_DIR}/deps/googletest")
 
-file(GLOB TESTS "test/*.cpp")
+#file(GLOB TESTS "test/*.cpp")
 
-add_executable(runUnitTests ${TESTS})
-target_link_libraries(runUnitTests gtest gtest_main)
-add_test(NAME mumpi-test COMMAND runUnitTests)
+#add_executable(runUnitTests ${TESTS})
+#target_link_libraries(runUnitTests gtest gtest_main)
+#add_test(NAME mumpi-test COMMAND runUnitTests)
