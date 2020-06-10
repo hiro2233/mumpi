@@ -206,7 +206,13 @@ int main(int argc, char *argv[]) {
 		{ "voice-hold", required_argument, NULL, 'i'},
 		{ NULL, 0, NULL, 0 }
 	};
-	double output_delay = 0.02;
+
+#ifdef __MYSYS__
+	double output_delay = 0.1;
+#else
+    double output_delay = 0.02;
+#endif
+
 	double vox_threshold = -70.0;	// dB
 	std::chrono::duration<double> voice_hold_interval(0.03);	// 50 ms
 
@@ -309,6 +315,8 @@ int main(int argc, char *argv[]) {
 
 	logger.warn(Pa_GetVersionText());
 
+    printf("\n");
+
 	// init audio I/O streams
 	PaStream *input_stream;
 	PaStream *output_stream;
@@ -326,9 +334,35 @@ int main(int argc, char *argv[]) {
 		logger.error("No default input device.");
 		exit(-1);
 	}
+
+    const   PaDeviceInfo *deviceInfo;
+    int numDevices;
+
+    numDevices = Pa_GetDeviceCount();
+    if( numDevices < 0 )
+    {
+        printf( "ERROR: Pa_CountDevices returned 0x%x\n", numDevices );
+        exit(-1);
+    }
+
+
+    for(int i=0; i<numDevices; i++ )
+    {
+        deviceInfo = Pa_GetDeviceInfo( i );
+        printf("Device Nr %d: %s\n",i ,deviceInfo->name);
+    }
+
+    printf("\n");
+
 	inputParameters.channelCount = NUM_CHANNELS;
 	inputParameters.sampleFormat = paInt16;
-	inputParameters.suggestedLatency = 0.02;//Pa_GetDeviceInfo(inputParameters.device)->defaultLowInputLatency;
+
+#ifdef __MSYS__
+	inputParameters.suggestedLatency = 0.1;//Pa_GetDeviceInfo(inputParameters.device)->defaultLowInputLatency;
+#else
+    inputParameters.suggestedLatency = 0.02;//Pa_GetDeviceInfo(inputParameters.device)->defaultLowInputLatency;
+#endif
+
 	inputParameters.hostApiSpecificStreamInfo = NULL;
 
 	logger.info("inputParameters.suggestedLatency: %.4f", inputParameters.suggestedLatency);
@@ -478,16 +512,16 @@ int main(int argc, char *argv[]) {
 					// compute RMS of sample window
 					double sum = 0;
 					for(int i = 0; i < OPUS_FRAME_SIZE; i++) {
-						const double sample = std::abs(out_buf[i]) / INT16_MAX;
+						const double sample = std::abs(out_buf[i]) / (double)INT16_MAX;
 						sum += sample * sample;
 					}
-					const double rms = std::sqrt(sum / OPUS_FRAME_SIZE);
+					const double rms = std::sqrt(sum / (double)OPUS_FRAME_SIZE);
 
 					double db = vox_threshold;
 					if(rms > 0.0)
 						db = 20.0 * std::log10(rms);
 
-					//logger.notice("Recorded voice dB: %.2f", db);
+					//logger.warn("Recorded voice dB: %.2f", db);
 
 					if (!first_run_flag) {
 						now = std::chrono::steady_clock::now();
@@ -500,6 +534,7 @@ int main(int argc, char *argv[]) {
 
 					if (db > vox_threshold || voice_hold_flag) { // only tx if vox threshold met
                         if ((out_buf != NULL) && (sw)) {
+                            //logger.warn("SW Recorded voice dB: %.2f", db);
                             mumble_callback.mum->sendAudioDataTarget(0, out_buf, OPUS_FRAME_SIZE);
                         }
 						if(!voice_hold_flag) {
@@ -512,6 +547,9 @@ int main(int argc, char *argv[]) {
 				std::this_thread::sleep_for(std::chrono::milliseconds(20));
                 if (cnt < 250) {
                     cnt++;
+                    if (cnt > 249) {
+                        logger.warn("Sending audio now!");
+                    }
                 } else {
                     sw = true;
                 }
