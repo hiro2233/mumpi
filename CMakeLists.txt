@@ -6,17 +6,13 @@ option(test "Build all tests." OFF) # makes boolean 'test' available
 
 project(mumpi)
 add_subdirectory("${PROJECT_SOURCE_DIR}/deps/mumlib")
-if (CMAKE_VERSION VERSION_LESS "3.1")
-    if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-      set (CMAKE_CXX_FLAGS "--std=gnu++11 ${CMAKE_CXX_FLAGS}")
-    endif ()
-  else ()
-    set (CMAKE_CXX_STANDARD 11)
-endif ()
+
 set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 
+set (CMAKE_CXX_FLAGS "-std=c++11 -O3 ${CMAKE_CXX_FLAGS}")
+
 if (MSYS)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -DLOG4CPP_FIX_ERROR_COLLISION=1 -D__USE_W32_SOCKETS")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DLOG4CPP_FIX_ERROR_COLLISION=1 -D__USE_W32_SOCKETS")
 endif ()
 
 INCLUDE(FindPkgConfig)
