@@ -213,7 +213,7 @@ int main(int argc, char *argv[]) {
     double output_delay = 0.02;
 #endif
 
-	double vox_threshold = -70.0;	// dB
+	double vox_threshold = -50.0;	// dB
 	std::chrono::duration<double> voice_hold_interval(0.03);	// 50 ms
 
 	// init logger
@@ -439,7 +439,8 @@ int main(int argc, char *argv[]) {
 	// This stuff should be on a separate thread
 	MumpiCallback mumble_callback(data.out_buf);
 	mumlib::MumlibConfiguration conf;
-	conf.opusEncoderBitrate = sample_rate;
+	//conf.opusEncoderBitrate = sample_rate;
+    conf.opusSampleRate = sample_rate;
 
 	std::thread mumble_thread([&]() {
 		while(!sig_caught) {
