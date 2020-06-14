@@ -207,7 +207,7 @@ int main(int argc, char *argv[]) {
 		{ NULL, 0, NULL, 0 }
 	};
 
-#ifdef __MYSYS__
+#ifdef __MSYS__
 	double output_delay = 0.1;
 #else
     double output_delay = 0.02;
