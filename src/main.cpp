@@ -554,7 +554,15 @@ int main(int argc, char *argv[]) {
                     sw = true;
                 }
 			}
+
+            if (mumble_callback.mum->getConnectionState() != mumlib::ConnectionState::CONNECTED) {
+                static bool tictoc;
+                tictoc = !tictoc;
+                logger.warn("Sleeping... %s", tictoc ? "tic" : "toc");
+                sleep(1);
+            }
 		}
+
 		delete[] out_buf;
 	});
 
