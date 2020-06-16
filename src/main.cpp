@@ -13,6 +13,8 @@
 #include "MumpiCallback.hpp"
 #include "RingBuffer.hpp"
 
+#define VIRTUAL_DEVICE "Virtual"
+
 int sample_rate = 16000;
 const int NUM_CHANNELS = 1;
 const int FRAMES_PER_BUFFER = 1024;
@@ -329,12 +331,6 @@ int main(int argc, char *argv[]) {
 	data.rec_buf = std::make_shared<RingBuffer<int16_t>>(MAX_SAMPLES);
 	data.out_buf = std::make_shared<RingBuffer<int16_t>>(MAX_SAMPLES);
 
-	inputParameters.device = Pa_GetDefaultInputDevice();
-	if (inputParameters.device == paNoDevice) {
-		logger.error("No default input device.");
-		exit(-1);
-	}
-
     const   PaDeviceInfo *deviceInfo;
     int numDevices;
 
@@ -345,14 +341,38 @@ int main(int argc, char *argv[]) {
         exit(-1);
     }
 
+    deviceInfo = Pa_GetDeviceInfo(Pa_GetDefaultOutputDevice());
+    printf("Default output device Nr %d: %s\n", Pa_GetDefaultOutputDevice(), deviceInfo->name);
 
-    for(int i=0; i<numDevices; i++ )
-    {
+    deviceInfo = Pa_GetDeviceInfo(Pa_GetDefaultInputDevice());
+    printf("Default input device Nr %d: %s\n\n", Pa_GetDefaultInputDevice(), deviceInfo->name);
+
+    int output_device = Pa_GetDefaultOutputDevice();
+    bool virtual_output = false;
+
+    for (int i = 0; i < numDevices; i++) {
         deviceInfo = Pa_GetDeviceInfo( i );
-        printf("Device Nr %d: %s\n",i ,deviceInfo->name);
+        if (deviceInfo->maxInputChannels > 0) {
+            printf("Input Device Nr %d: %s\n", i, deviceInfo->name);
+        }
+
+        if (deviceInfo->maxOutputChannels > 0) {
+            printf("Output Device Nr %d: %s\n", i, deviceInfo->name);
+            if (strstr(deviceInfo->name, VIRTUAL_DEVICE)) {
+                output_device = i;
+                virtual_output = true;
+                printf("Virtual Output at Nr %d: %s\n", output_device, deviceInfo->name);
+            }
+        }
     }
 
     printf("\n");
+
+	inputParameters.device = Pa_GetDefaultInputDevice();
+	if (inputParameters.device == paNoDevice) {
+		logger.error("No default input device.");
+		exit(-1);
+	}
 
 	inputParameters.channelCount = NUM_CHANNELS;
 	inputParameters.sampleFormat = paInt16;
@@ -385,7 +405,7 @@ int main(int argc, char *argv[]) {
 		exit(-1);
 	}
 
-	output_parameters.device = Pa_GetDefaultOutputDevice();
+	output_parameters.device = output_device;
 	if(output_parameters.device == paNoDevice) {
 		logger.error("No default output device.");
 		exit(-1);
