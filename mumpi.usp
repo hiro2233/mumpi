@@ -24,13 +24,11 @@
 				<Option type="1" />
 				<Option compiler="gcc" />
 				<Compiler>
-					<Add option="-march=pentium4" />
-					<Add option="-flto" />
 					<Add option="-O2" />
 				</Compiler>
 				<Linker>
-					<Add option="-flto" />
 					<Add option="-s" />
+					<Add option="-static" />
 					<Add directory="deps/mumlib/bin/Release" />
 				</Linker>
 			</Target>
@@ -38,18 +36,22 @@
 		<Compiler>
 			<Add option="-Wall" />
 			<Add option="-std=c++11" />
+			<Add option="-msse" />
+			<Add option="-Wno-unused-variable" />
+			<Add option="-Wno-sign-compare" />
+			<Add option="-Wno-sequence-point" />
+			<Add option="-Wno-format" />
+			<Add option="-Wno-unused-but-set-variable" />
+			<Add option="-Wno-cpp" />
 			<Add option="-DLOG4CPP_FIX_ERROR_COLLISION=1 -D__USE_W32_SOCKETS" />
 			<Add directory="include" />
 			<Add directory="deps/mumlib/include" />
-			<Add directory="$(#URUSPATH)/home/urus/boost_1_72_0" />
+			<Add directory="$(HOME)/boost_1_72_0" />
 		</Compiler>
 		<Linker>
-			<Add option="-static-libstdc++" />
-			<Add option="-static-libgcc" />
-			<Add option="-static" />
 			<Add library="log4cpp" />
 			<Add library="mumlib" />
-			<Add library="portaudio.dll" />
+			<Add library="portaudio" />
 			<Add library="ws2_32" />
 			<Add library="ssl" />
 			<Add library="crypto" />
@@ -57,6 +59,7 @@
 			<Add library="opus" />
 			<Add library="speexdsp" />
 			<Add library="z" />
+			<Add library="winmm" />
 		</Linker>
 		<Unit filename="include/EmptyBufferException.hpp" />
 		<Unit filename="include/MumpiCallback.hpp" />
