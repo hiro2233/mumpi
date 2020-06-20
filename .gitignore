@@ -57,3 +57,10 @@ install_manifest.txt
 
 # sftp configuration file
 sftp-config.json
+
+debug
+release
+*.gch
+*.layout
+*.depend
+*cscope_file_list
