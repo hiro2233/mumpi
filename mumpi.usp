@@ -6,7 +6,42 @@
 		<Option pch_mode="2" />
 		<Option compiler="gcc" />
 		<Build>
-			<Target title="Debug">
+			<Target title="Debug_win32">
+				<Option platforms="Windows;" />
+				<Option output="bin/Debug/mumpi" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Debug/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-g" />
+					<Add option="-DLOG4CPP_FIX_ERROR_COLLISION=1 -D__USE_W32_SOCKETS" />
+				</Compiler>
+				<Linker>
+					<Add library="ws2_32" />
+					<Add library="winmm" />
+					<Add directory="deps/mumlib/bin/Debug" />
+				</Linker>
+			</Target>
+			<Target title="Release_win32">
+				<Option platforms="Windows;" />
+				<Option output="bin/Release/mumpi" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Release/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-O2" />
+					<Add option="-DLOG4CPP_FIX_ERROR_COLLISION=1 -D__USE_W32_SOCKETS" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+					<Add option="-static" />
+					<Add library="ws2_32" />
+					<Add library="winmm" />
+					<Add directory="deps/mumlib/bin/Release" />
+				</Linker>
+			</Target>
+			<Target title="Debug_unix">
+				<Option platforms="Unix;Mac;" />
 				<Option output="bin/Debug/mumpi" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
@@ -15,10 +50,13 @@
 					<Add option="-g" />
 				</Compiler>
 				<Linker>
+					<Add option="-pthread" />
+					<Add library="boost_system" />
 					<Add directory="deps/mumlib/bin/Debug" />
 				</Linker>
 			</Target>
-			<Target title="Release">
+			<Target title="Release_unix">
+				<Option platforms="Unix;Mac;" />
 				<Option output="bin/Release/mumpi" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/Release/" />
 				<Option type="1" />
@@ -28,7 +66,8 @@
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
-					<Add option="-static" />
+					<Add option="-pthread" />
+					<Add library="boost_system" />
 					<Add directory="deps/mumlib/bin/Release" />
 				</Linker>
 			</Target>
@@ -43,7 +82,6 @@
 			<Add option="-Wno-format" />
 			<Add option="-Wno-unused-but-set-variable" />
 			<Add option="-Wno-cpp" />
-			<Add option="-DLOG4CPP_FIX_ERROR_COLLISION=1 -D__USE_W32_SOCKETS" />
 			<Add directory="include" />
 			<Add directory="deps/mumlib/include" />
 			<Add directory="$(HOME)/boost_1_72_0" />
@@ -52,14 +90,12 @@
 			<Add library="log4cpp" />
 			<Add library="mumlib" />
 			<Add library="portaudio" />
-			<Add library="ws2_32" />
 			<Add library="ssl" />
 			<Add library="crypto" />
 			<Add library="protobuf" />
 			<Add library="opus" />
 			<Add library="speexdsp" />
 			<Add library="z" />
-			<Add library="winmm" />
 		</Linker>
 		<Unit filename="include/EmptyBufferException.hpp" />
 		<Unit filename="include/MumpiCallback.hpp" />
