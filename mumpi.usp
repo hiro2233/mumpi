@@ -61,6 +61,7 @@
 				<Option object_output="obj/Release/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
+				<Option parameters="-s127.0.0.1 -umumpi -p1234" />
 				<Compiler>
 					<Add option="-O2" />
 				</Compiler>
