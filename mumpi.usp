@@ -29,15 +29,30 @@
 				<Option type="1" />
 				<Option compiler="gcc" />
 				<Compiler>
-					<Add option="-O2" />
-					<Add option="-DLOG4CPP_FIX_ERROR_COLLISION=1 -D__USE_W32_SOCKETS" />
+					<Add option="-Wall" />
+					<Add option="-std=c++11" />
+					<Add option="-msse" />
+					<Add option="-Wno-unused-variable" />
+					<Add option="-Wno-sign-compare" />
+					<Add option="-Wno-sequence-point" />
+					<Add option="-Wno-format" />
+					<Add option="-Wno-unused-but-set-variable" />
+					<Add option="-Wno-cpp" />
+					<Add option="-D__LIB_URUSSTUDIO__" />
+					<Add directory="include" />
+					<Add directory="deps/mumlib/include" />
+					<Add directory="$(HOME)/boost_1_72_0" />
 				</Compiler>
 				<Linker>
-					<Add option="-s" />
-					<Add option="-static" />
-					<Add library="ws2_32" />
-					<Add library="winmm" />
-					<Add directory="deps/mumlib/bin/Release" />
+					<Add library="log4cpp" />
+					<Add library="mumlib" />
+					<Add library="portaudio" />
+					<Add library="ssl" />
+					<Add library="crypto" />
+					<Add library="protobuf" />
+					<Add library="opus" />
+					<Add library="speexdsp" />
+					<Add library="z" />
 				</Linker>
 			</Target>
 			<Target title="Debug_unix">
@@ -72,6 +87,42 @@
 					<Add directory="deps/mumlib/bin/Release" />
 				</Linker>
 			</Target>
+			<Target title="Releaselib_unix">
+				<Option platforms="Unix;Mac;" />
+				<Option output="bin/Release/mumpi" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="bin/Release" />
+				<Option object_output="obj/Release/" />
+				<Option type="3" />
+				<Option compiler="gcc" />
+				<Option parameters="-s127.0.0.1 -umumpi -p1234" />
+				<Compiler>
+					<Add option="-O2" />
+					<Add option="-fPIC" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+					<Add option="-pthread" />
+					<Add library="boost_system" />
+					<Add directory="deps/mumlib/bin/Release" />
+				</Linker>
+			</Target>
+			<Target title="Debuglib_unix">
+				<Option platforms="Unix;Mac;" />
+				<Option output="bin/Debug/mumpi" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="bin/Debug" />
+				<Option object_output="obj/Debug/" />
+				<Option type="3" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-fPIC" />
+					<Add option="-g" />
+				</Compiler>
+				<Linker>
+					<Add option="-pthread" />
+					<Add library="boost_system" />
+					<Add directory="deps/mumlib/bin/Debug" />
+				</Linker>
+			</Target>
 		</Build>
 		<Compiler>
 			<Add option="-Wall" />
@@ -83,6 +134,7 @@
 			<Add option="-Wno-format" />
 			<Add option="-Wno-unused-but-set-variable" />
 			<Add option="-Wno-cpp" />
+			<Add option="-D__LIB_URUSSTUDIO__" />
 			<Add directory="include" />
 			<Add directory="deps/mumlib/include" />
 			<Add directory="$(HOME)/boost_1_72_0" />
