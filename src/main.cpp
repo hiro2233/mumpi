@@ -24,6 +24,24 @@ static log4cpp::Category& logger = log4cpp::Category::getRoot();
 static volatile sig_atomic_t sig_caught = 0;
 static bool mumble_thread_run_flag = true;
 static bool input_consumer_thread_run_flag = true;
+bool connection_state = false;
+
+#ifdef __LIB_URUSSTUDIO__
+namespace MUMPI {
+    bool get_connected();
+    void stop_threading();
+}
+
+bool MUMPI::get_connected()
+{
+    return connection_state;
+}
+
+void MUMPI::stop_threading()
+{
+    sig_caught = 1;
+}
+#endif
 
 /**
  * Signal interrupt handler
@@ -119,8 +137,8 @@ static int paOutputCallback(const void *inputBuffer,
 	// if we dont have enough samples in our ring buffer, we have to still supply 0s to the output_buffer
 	const size_t requested_samples = (framesPerBuffer * NUM_CHANNELS);
 	const size_t available_samples = pa_data->out_buf->getRemaining();
-	logger.info("requested_samples: %d", requested_samples);
-	logger.info("available_samples: %d", available_samples);
+	//logger.info("requested_samples: %d", requested_samples);
+	//logger.info("available_samples: %d", available_samples);
 	if(requested_samples > available_samples) {
 		pa_data->out_buf->top(output_buffer, 0, available_samples);
 		for(size_t i = available_samples; i < requested_samples - available_samples; i++) {
@@ -188,7 +206,18 @@ void help() {
  * 5. Clean up mumlib client
  * 6. Clean up PortAudio engine
  */
-int main(int argc, char *argv[]) {
+
+#ifdef __LIB_URUSSTUDIO__
+int main_start(int argc, char *argv[])
+{
+    sig_caught = 0;
+	optind = 0;
+	connection_state = 0;
+#else
+int main(int argc, char *argv[])
+{
+#endif // __URUSSTUDIO__
+
 	bool verbose = false;
 	std::string server;
 	std::string username;
@@ -227,6 +256,7 @@ int main(int argc, char *argv[]) {
 	while(1) {
 		// obtain a option
 		next_option = getopt_long(argc, argv, short_options, long_options, NULL);
+		printf("next: %s\n", optarg);
 
 		if(next_option == -1)
 			break;  // no more options
@@ -311,7 +341,7 @@ int main(int argc, char *argv[]) {
 	PaError err;
 	err = Pa_Initialize();
 	if(err != paNoError) {
-		logger.error("PortAudio error: %s", Pa_GetErrorText(err));
+		logger.info("PortAudio error: %s", Pa_GetErrorText(err));
 		exit(-1);
 	}
 
@@ -370,7 +400,7 @@ int main(int argc, char *argv[]) {
 
 	inputParameters.device = Pa_GetDefaultInputDevice();
 	if (inputParameters.device == paNoDevice) {
-		logger.error("No default input device.");
+		logger.info("No default input device.");
 		exit(-1);
 	}
 
@@ -397,17 +427,17 @@ int main(int argc, char *argv[]) {
 						paRecordCallback,      // PortAudio callback function
 						&data);                // data pointer
 
-	logger.info("defaultHighOutputLatency: %.4f", Pa_GetDeviceInfo(inputParameters.device)->defaultHighOutputLatency);
-    printf("defaultHighOutputLatency: %.4f\n\n", Pa_GetDeviceInfo(inputParameters.device)->defaultHighOutputLatency);
+	logger.info("inputParameters defaultHighOutputLatency: %.4f", Pa_GetDeviceInfo(inputParameters.device)->defaultHighOutputLatency);
+    printf("inputParameters defaultHighOutputLatency: %.4f\n\n", Pa_GetDeviceInfo(inputParameters.device)->defaultHighOutputLatency);
 
 	if(err != paNoError) {
-	    logger.error("Failed to open input stream: %s", Pa_GetErrorText(err));
+	    logger.info("Failed to open input stream: %s", Pa_GetErrorText(err));
 		exit(-1);
 	}
 
 	output_parameters.device = output_device;
 	if(output_parameters.device == paNoDevice) {
-		logger.error("No default output device.");
+		logger.info("No default output device.");
 		exit(-1);
 	}
 	output_parameters.channelCount = NUM_CHANNELS;
@@ -430,24 +460,24 @@ int main(int argc, char *argv[]) {
 						paOutputCallback,	// PortAudio callback function
 						&data);				// data pointer
 
-	logger.info("defaultHighOutputLatency: %.4f", Pa_GetDeviceInfo(output_parameters.device)->defaultHighOutputLatency);
-    printf("defaultHighOutputLatency: %.4f\n\n", Pa_GetDeviceInfo(output_parameters.device)->defaultHighOutputLatency);
+	logger.info("output_parameters defaultHighOutputLatency: %.4f", Pa_GetDeviceInfo(output_parameters.device)->defaultHighOutputLatency);
+    printf("output_parameters defaultHighOutputLatency: %.4f\n\n", Pa_GetDeviceInfo(output_parameters.device)->defaultHighOutputLatency);
 
 	if(err != paNoError) {
-		logger.error("Failed to open output stream: %s", Pa_GetErrorText(err));
+		logger.info("Failed to open output stream: %s", Pa_GetErrorText(err));
 		exit(-1);
 	}
 
 	// start the streams
 	err = Pa_StartStream(input_stream);
 	if(err != paNoError) {
-		logger.error("Failed to start input stream: %s", Pa_GetErrorText(err));
+		logger.info("Failed to start input stream: %s", Pa_GetErrorText(err));
 		exit(-1);
 	}
 
 	err = Pa_StartStream(output_stream);
 	if(err != paNoError) {
-		logger.error("Failed to start output stream: %s", Pa_GetErrorText(err));
+		logger.info("Failed to start output stream: %s", Pa_GetErrorText(err));
 		exit(-1);
 	}
 
@@ -471,10 +501,10 @@ int main(int argc, char *argv[]) {
 				mum.connect(server, 1234, username, password);
 				mum.run();
 			} catch (mumlib::TransportException &exp) {
-				logger.error("TransportException main: %s.", exp.what());
-				logger.error("Attempting to reconnect in 5 s.");
+				logger.info("TransportException main: %s.", exp.what());
+				logger.info("Attempting to reconnect in 5 s.");
                 logger.warn("Connection State: %d", (uint8_t)mumble_callback.mum->getConnectionState());
-				std::this_thread::sleep_for(std::chrono::seconds(5));
+				std::this_thread::sleep_for(std::chrono::seconds(3));
 			}
 		}
 	});
@@ -528,6 +558,7 @@ int main(int argc, char *argv[]) {
 
 				// do a bulk get and send it through mumble client
 				if(mumble_callback.mum->getConnectionState() == mumlib::ConnectionState::CONNECTED) {
+				    connection_state = true;
 					data.rec_buf->top(out_buf, 0, OPUS_FRAME_SIZE);
 
 					// compute RMS of sample window
@@ -601,6 +632,7 @@ int main(int argc, char *argv[]) {
 		std::this_thread::sleep_for(std::chrono::milliseconds(250));
 	}
 
+	logger.setPriority(log4cpp::Priority::INFO);
 	///////////////////////
 	// CLEAN UP
 	///////////////////////
@@ -610,11 +642,12 @@ int main(int argc, char *argv[]) {
 	// clean up mumble library
 	///////////////////////////
 	printf("Disconnecting...\n");
-    //mum.disconnect();
-    sleep(5);
-    input_consumer_thread.detach();
+    mumble_callback.mum->disconnect();
+    //input_consumer_thread.detach();
 	input_consumer_thread.join();
+	//mumble_thread.detach();
 	mumble_thread.join();
+	std::this_thread::sleep_for(std::chrono::seconds(3));
 
 	///////////////////////////
 	// clean up audio library
@@ -625,13 +658,13 @@ int main(int argc, char *argv[]) {
 	logger.info("Closing input stream");
 	err = Pa_CloseStream(input_stream);
 	if(err != paNoError) {
-		logger.error("Failed to close inputstream: %s", Pa_GetErrorText(err));
+		logger.info("Failed to close inputstream: %s", Pa_GetErrorText(err));
 		exit(-1);
 	}
 	logger.info("Closing output stream");
 	err = Pa_CloseStream(output_stream);
 	if(err != paNoError) {
-		logger.error("Failed to close output stream: %s", Pa_GetErrorText(err));
+		logger.info("Failed to close output stream: %s", Pa_GetErrorText(err));
 		exit(-1);
 	}
 
@@ -639,9 +672,12 @@ int main(int argc, char *argv[]) {
 	logger.info("Terminating PortAudio engine");
 	err = Pa_Terminate();
 	if(err != paNoError) {
-		logger.error("PortAudio error: %s", Pa_GetErrorText(err));
+		logger.info("PortAudio error: %s", Pa_GetErrorText(err));
 		exit(-1);
 	}
+
+    connection_state = false;
+	logger.info("Terminated!");
 
 	return 0;
 }
