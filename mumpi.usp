@@ -98,6 +98,7 @@
 				<Compiler>
 					<Add option="-O2" />
 					<Add option="-fPIC" />
+					<Add option="-D__LIB_URUSSTUDIO__" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
@@ -116,6 +117,7 @@
 				<Compiler>
 					<Add option="-fPIC" />
 					<Add option="-g" />
+					<Add option="-D__LIB_URUSSTUDIO__" />
 				</Compiler>
 				<Linker>
 					<Add option="-pthread" />
@@ -134,7 +136,6 @@
 			<Add option="-Wno-format" />
 			<Add option="-Wno-unused-but-set-variable" />
 			<Add option="-Wno-cpp" />
-			<Add option="-D__LIB_URUSSTUDIO__" />
 			<Add directory="include" />
 			<Add directory="deps/mumlib/include" />
 			<Add directory="$(HOME)/boost_1_72_0" />
