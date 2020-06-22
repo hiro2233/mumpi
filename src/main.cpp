@@ -49,8 +49,8 @@ void MUMPI::stop_threading()
  * @param signal the signal
  */
 static void sigHandler(int signal) {
-	logger.info("caught signal %d", signal);
-    printf("\ncaught signal %d\n", signal);
+	//logger.info("caught signal %d", signal);
+    //printf("\ncaught signal %d\n", signal);
 	sig_caught = signal;
 }
 
@@ -212,7 +212,7 @@ int main_start(int argc, char *argv[])
 {
     sig_caught = 0;
 	optind = 0;
-	connection_state = 0;
+	connection_state = false;
 #else
 int main(int argc, char *argv[])
 {
@@ -256,7 +256,6 @@ int main(int argc, char *argv[])
 	while(1) {
 		// obtain a option
 		next_option = getopt_long(argc, argv, short_options, long_options, NULL);
-		printf("next: %s\n", optarg);
 
 		if(next_option == -1)
 			break;  // no more options
@@ -509,7 +508,7 @@ int main(int argc, char *argv[])
 		}
 	});
 
-    std::this_thread::sleep_for(std::chrono::seconds(1));
+    std::this_thread::sleep_for(std::chrono::seconds(2));
 
     std::vector<mumlib::MumbleUser> mumuser = mumble_callback.mum->getListAllUser();
     for(int i = 0; i < mumuser.size(); i++) {
@@ -518,7 +517,6 @@ int main(int argc, char *argv[])
         //}
     }
 
-    int error;
     //mumble_callback.mum->joinChannel("Lobby");
     //mumble_callback.mum->sendVoiceTarget(0, mumlib::VoiceTargetType::CHANNEL, 1);
     //mumble_callback.mum->sendVoiceTarget(0, mumlib::VoiceTargetType::USER, 1);
@@ -647,7 +645,7 @@ int main(int argc, char *argv[])
 	input_consumer_thread.join();
 	//mumble_thread.detach();
 	mumble_thread.join();
-	std::this_thread::sleep_for(std::chrono::seconds(3));
+	std::this_thread::sleep_for(std::chrono::seconds(1));
 
 	///////////////////////////
 	// clean up audio library
