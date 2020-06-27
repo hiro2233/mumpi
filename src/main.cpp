@@ -12,6 +12,7 @@
 #include <mumlib/Transport.hpp>
 #include "MumpiCallback.hpp"
 #include "RingBuffer.hpp"
+#include "typedef_ext.h"
 
 #define VIRTUAL_DEVICE "Virtual"
 
@@ -26,22 +27,68 @@ static bool mumble_thread_run_flag = true;
 static bool input_consumer_thread_run_flag = true;
 bool connection_state = false;
 
-#ifdef __LIB_URUSSTUDIO__
-namespace MUMPI {
+wmdevices_t wmdev;
+static const PaDeviceInfo *deviceInfo;
+
+namespace WIMIC {
     bool get_connected();
     void stop_threading();
+    void detect_devices();
 }
 
-bool MUMPI::get_connected()
+bool WIMIC::get_connected()
 {
     return connection_state;
 }
 
-void MUMPI::stop_threading()
+void WIMIC::stop_threading()
 {
     sig_caught = 1;
 }
-#endif
+
+void WIMIC::detect_devices()
+{
+	PaError err;
+	err = Pa_Initialize();
+	if(err != paNoError) {
+		printf("PortAudio error: %s\n", Pa_GetErrorText(err));
+		exit(-1);
+	}
+
+    logger.warn(Pa_GetVersionText());
+
+    wmdev.dev_count = Pa_GetDeviceCount();
+    int output_device = Pa_GetDefaultOutputDevice();
+    wmdev.default_dev = output_device;
+    bool virtual_output = false;
+
+    for (int i = 0; i < wmdev.dev_count; i++) {
+        deviceInfo = Pa_GetDeviceInfo(i);
+        wmdev.name[i] = new char[20];
+        if (deviceInfo->maxInputChannels > 0) {
+            wmdev.name[i] = deviceInfo->name;
+            wmdev.inout_dev = INOUT_DEV::INPUT_DEV;
+            wmdev.type_dev = TYPE_DEV::PHISICAL;
+            printf("Input Device Nr %d: %s\n", i, deviceInfo->name);
+        }
+
+        if (deviceInfo->maxOutputChannels > 0) {
+            wmdev.name[i] = deviceInfo->name;
+            wmdev.inout_dev = INOUT_DEV::OUTPUT_DEV;
+            wmdev.type_dev = TYPE_DEV::PHISICAL;
+            printf("Output Device Nr %d: %s\n", i, deviceInfo->name);
+            if (strstr(deviceInfo->name, VIRTUAL_DEVICE)) {
+                output_device = i;
+                virtual_output = true;
+                wmdev.name[i] = deviceInfo->name;
+                wmdev.type_dev = TYPE_DEV::PHISICAL;
+                printf("Virtual Output at Nr %d: %s\n", output_device, deviceInfo->name);
+            }
+        }
+    }
+
+    printf("\n");
+}
 
 /**
  * Signal interrupt handler
@@ -334,17 +381,9 @@ int main(int argc, char *argv[])
 	// logger.info("Starting in 5 seconds...");
 	// std::this_thread::sleep_for(std::chrono::seconds(5));
 
-	///////////////////////
-	// init audio library
-	///////////////////////
-	PaError err;
-	err = Pa_Initialize();
-	if(err != paNoError) {
-		logger.info("PortAudio error: %s", Pa_GetErrorText(err));
-		exit(-1);
-	}
-
-	logger.warn(Pa_GetVersionText());
+    if (wmdev.dev_count < 1) {
+        WIMIC::detect_devices();
+    }
 
     printf("\n");
 
@@ -360,13 +399,9 @@ int main(int argc, char *argv[])
 	data.rec_buf = std::make_shared<RingBuffer<int16_t>>(MAX_SAMPLES);
 	data.out_buf = std::make_shared<RingBuffer<int16_t>>(MAX_SAMPLES);
 
-    const   PaDeviceInfo *deviceInfo;
-    int numDevices;
-
-    numDevices = Pa_GetDeviceCount();
-    if( numDevices < 0 )
+    if( wmdev.dev_count < 0 )
     {
-        printf( "ERROR: Pa_CountDevices returned 0x%x\n", numDevices );
+        printf( "ERROR: Pa_CountDevices returned 0x%x\n", wmdev.dev_count );
         exit(-1);
     }
 
@@ -375,27 +410,6 @@ int main(int argc, char *argv[])
 
     deviceInfo = Pa_GetDeviceInfo(Pa_GetDefaultInputDevice());
     printf("Default input device Nr %d: %s\n\n", Pa_GetDefaultInputDevice(), deviceInfo->name);
-
-    int output_device = Pa_GetDefaultOutputDevice();
-    bool virtual_output = false;
-
-    for (int i = 0; i < numDevices; i++) {
-        deviceInfo = Pa_GetDeviceInfo( i );
-        if (deviceInfo->maxInputChannels > 0) {
-            printf("Input Device Nr %d: %s\n", i, deviceInfo->name);
-        }
-
-        if (deviceInfo->maxOutputChannels > 0) {
-            printf("Output Device Nr %d: %s\n", i, deviceInfo->name);
-            if (strstr(deviceInfo->name, VIRTUAL_DEVICE)) {
-                output_device = i;
-                virtual_output = true;
-                printf("Virtual Output at Nr %d: %s\n", output_device, deviceInfo->name);
-            }
-        }
-    }
-
-    printf("\n");
 
 	inputParameters.device = Pa_GetDefaultInputDevice();
 	if (inputParameters.device == paNoDevice) {
@@ -417,6 +431,7 @@ int main(int argc, char *argv[])
 	logger.info("inputParameters.suggestedLatency: %.4f", inputParameters.suggestedLatency);
     printf("inputParameters.suggestedLatency: %.4f\n", inputParameters.suggestedLatency);
 
+    PaError err;
 	err = Pa_OpenStream(&input_stream,         // the input stream
 						&inputParameters,      // input params
 						NULL,                  // output params
@@ -434,7 +449,7 @@ int main(int argc, char *argv[])
 		exit(-1);
 	}
 
-	output_parameters.device = output_device;
+	output_parameters.device = wmdev.default_dev;
 	if(output_parameters.device == paNoDevice) {
 		logger.info("No default output device.");
 		exit(-1);
