@@ -55,7 +55,7 @@ void WIMIC::detect_devices()
 		exit(-1);
 	}
 
-    logger.warn(Pa_GetVersionText());
+    printf("Portaudio ver.: %s\n", Pa_GetVersionText());
 
     wmdev.dev_count = Pa_GetDeviceCount();
     int output_device = Pa_GetDefaultOutputDevice();
@@ -64,7 +64,7 @@ void WIMIC::detect_devices()
 
     for (int i = 0; i < wmdev.dev_count; i++) {
         deviceInfo = Pa_GetDeviceInfo(i);
-        wmdev.name[i] = new char[20];
+        wmdev.name[i] = new char[50];
         if (deviceInfo->maxInputChannels > 0) {
             wmdev.name[i] = deviceInfo->name;
             wmdev.inout_dev = INOUT_DEV::INPUT_DEV;
