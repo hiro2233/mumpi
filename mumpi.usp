@@ -159,6 +159,7 @@
 				<Option compiler="gcc" />
 				<Compiler>
 					<Add option="-g" />
+					<Add option="-std=gnu++11" />
 				</Compiler>
 				<Linker>
 					<Add option="-pthread" />
@@ -175,6 +176,7 @@
 				<Option parameters="-s127.0.0.1 -umumpi -p1234" />
 				<Compiler>
 					<Add option="-O2" />
+					<Add option="-std=gnu++11" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
@@ -193,6 +195,7 @@
 				<Option parameters="-s127.0.0.1 -umumpi -p1234" />
 				<Compiler>
 					<Add option="-O2" />
+					<Add option="-std=gnu++11" />
 					<Add option="-D__LIB_URUSSTUDIO__" />
 				</Compiler>
 				<Linker>
@@ -211,6 +214,7 @@
 				<Compiler>
 					<Add option="-fPIC" />
 					<Add option="-g" />
+					<Add option="-std=gnu++11" />
 					<Add option="-D__LIB_URUSSTUDIO__" />
 				</Compiler>
 				<Linker>
