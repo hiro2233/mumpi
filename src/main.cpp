@@ -67,21 +67,21 @@ void WIMIC::detect_devices()
         wmdev.name[i] = new char[50];
         if (deviceInfo->maxInputChannels > 0) {
             wmdev.name[i] = deviceInfo->name;
-            wmdev.inout_dev = INOUT_DEV::INPUT_DEV;
-            wmdev.type_dev = TYPE_DEV::PHISICAL;
+            wmdev.inout_dev[i] = INOUT_DEV::INPUT_DEV;
+            wmdev.type_dev[i] = TYPE_DEV::PHISICAL;
             printf("Input Device Nr %d: %s\n", i, deviceInfo->name);
         }
 
         if (deviceInfo->maxOutputChannels > 0) {
             wmdev.name[i] = deviceInfo->name;
-            wmdev.inout_dev = INOUT_DEV::OUTPUT_DEV;
-            wmdev.type_dev = TYPE_DEV::PHISICAL;
+            wmdev.inout_dev[i] = INOUT_DEV::OUTPUT_DEV;
+            wmdev.type_dev[i] = TYPE_DEV::PHISICAL;
             printf("Output Device Nr %d: %s\n", i, deviceInfo->name);
             if (strstr(deviceInfo->name, VIRTUAL_DEVICE)) {
                 output_device = i;
                 virtual_output = true;
                 wmdev.name[i] = deviceInfo->name;
-                wmdev.type_dev = TYPE_DEV::PHISICAL;
+                wmdev.type_dev[i] = TYPE_DEV::PHISICAL;
                 printf("Virtual Output at Nr %d: %s\n", output_device, deviceInfo->name);
             }
         }
