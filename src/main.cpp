@@ -81,7 +81,7 @@ void WIMIC::detect_devices()
                 output_device = i;
                 virtual_output = true;
                 wmdev.name[i] = deviceInfo->name;
-                wmdev.type_dev[i] = TYPE_DEV::PHISICAL;
+                wmdev.type_dev[i] = TYPE_DEV::VIRTUAL;
                 printf("Virtual Output at Nr %d: %s\n", output_device, deviceInfo->name);
             }
         }
