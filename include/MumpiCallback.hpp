@@ -5,10 +5,13 @@
 #include <stdio.h>
 #include "RingBuffer.hpp"
 #include "mumlib/Transport.hpp"
+#ifdef __LIB_URUSSTUDIO__
+#include "wimic_Callback.h"
+#endif // __LIB_URUSSTUDIO__
 
 /**
  * Callback class for mumlib. This simply extends from mumlib::BasicCallback
- * which implements some of the virtual callback methods 
+ * which implements some of the virtual callback methods
  */
 class MumpiCallback : public mumlib::BasicCallback {
 public:

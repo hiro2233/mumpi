@@ -1,8 +1,14 @@
 #include "MumpiCallback.hpp"
 
+#ifdef __LIB_URUSSTUDIO__
+static wimic_Callback wimic_callback = WIMIC::get_instance();
+#endif // __LIB_URUSSTUDIO__
 
 MumpiCallback::MumpiCallback(std::shared_ptr<RingBuffer<int16_t>> out_buf) :
         _out_buf(out_buf) {
+#ifdef __LIB_URUSSTUDIO__
+    wimic_callback.init(out_buf);
+#endif
 }
 
 MumpiCallback::~MumpiCallback() {
@@ -42,7 +48,11 @@ void MumpiCallback::audio(int target,
     //printf("Received audio: pcm_data_size: %d target: %d sesseionID: %d sequence: %d\n", pcm_data_size, target, sessionId, sequenceNumber);
     //printf("\nMumpiCallback Received audio: pcm_data_size: %d\n", pcm_data_size);
     if(pcm_data != NULL) {
+#ifdef __LIB_URUSSTUDIO__
+        wimic_callback.update_audio(target, sessionId, sequenceNumber, pcm_data, pcm_data_size);
+#else
         _out_buf->push(pcm_data, 0, pcm_data_size);
+#endif // __LIB_URUSSTUDIO__
     }
 }
 
