@@ -388,7 +388,9 @@ int main(int argc, char *argv[])
     printf("\n");
 
 	// init audio I/O streams
+#ifndef INPUT_STREAM_DISABLED
 	PaStream *input_stream;
+#endif // INPUT_STREAM_DISABLED
 	PaStream *output_stream;
 	PaData data;
 	PaStreamParameters inputParameters;
@@ -432,6 +434,7 @@ int main(int argc, char *argv[])
     printf("inputParameters.suggestedLatency: %.4f\n", inputParameters.suggestedLatency);
 
     PaError err;
+#ifndef INPUT_STREAM_DISABLED
 	err = Pa_OpenStream(&input_stream,         // the input stream
 						&inputParameters,      // input params
 						NULL,                  // output params
@@ -440,7 +443,7 @@ int main(int argc, char *argv[])
 						paClipOff,             // we won't output out of range samples so don't bother clipping them
 						paRecordCallback,      // PortAudio callback function
 						&data);                // data pointer
-
+#endif // INPUT_STREAM_DISABLED
 	logger.info("inputParameters defaultHighOutputLatency: %.4f", Pa_GetDeviceInfo(inputParameters.device)->defaultHighOutputLatency);
     printf("inputParameters defaultHighOutputLatency: %.4f\n\n", Pa_GetDeviceInfo(inputParameters.device)->defaultHighOutputLatency);
 
@@ -483,7 +486,9 @@ int main(int argc, char *argv[])
 	}
 
 	// start the streams
+#ifndef INPUT_STREAM_DISABLED
 	err = Pa_StartStream(input_stream);
+#endif // INPUT_STREAM_DISABLED
 	if(err != paNoError) {
 		logger.info("Failed to start input stream: %s", Pa_GetErrorText(err));
 		exit(-1);
@@ -571,7 +576,6 @@ int main(int argc, char *argv[])
 
 				// do a bulk get and send it through mumble client
 				if(mumble_callback.mum->getConnectionState() == mumlib::ConnectionState::CONNECTED) {
-				    connection_state = true;
 					data.rec_buf->top(out_buf, 0, OPUS_FRAME_SIZE);
 
 					// compute RMS of sample window
@@ -625,6 +629,8 @@ int main(int argc, char *argv[])
                 tictoc = !tictoc;
                 logger.warn("Sleeping... %s", tictoc ? "tic" : "toc");
                 sleep(1);
+            } else {
+                connection_state = true;
             }
 		}
 
@@ -669,7 +675,9 @@ int main(int argc, char *argv[])
 
 	// close streams
 	logger.info("Closing input stream");
+#ifndef INPUT_STREAM_DISABLED
 	err = Pa_CloseStream(input_stream);
+#endif // INPUT_STREAM_DISABLED
 	if(err != paNoError) {
 		logger.info("Failed to close inputstream: %s", Pa_GetErrorText(err));
 		exit(-1);
