@@ -409,7 +409,8 @@ int main(int argc, char *argv[])
 
     deviceInfo = Pa_GetDeviceInfo(Pa_GetDefaultOutputDevice());
     printf("Default output device Nr %d: %s\n", Pa_GetDefaultOutputDevice(), deviceInfo->name);
-
+    PaError err;
+#ifndef INPUT_STREAM_DISABLED
     deviceInfo = Pa_GetDeviceInfo(Pa_GetDefaultInputDevice());
     printf("Default input device Nr %d: %s\n\n", Pa_GetDefaultInputDevice(), deviceInfo->name);
 
@@ -433,7 +434,6 @@ int main(int argc, char *argv[])
 	logger.info("inputParameters.suggestedLatency: %.4f", inputParameters.suggestedLatency);
     printf("inputParameters.suggestedLatency: %.4f\n", inputParameters.suggestedLatency);
 
-    PaError err;
 #ifndef INPUT_STREAM_DISABLED
 	err = Pa_OpenStream(&input_stream,         // the input stream
 						&inputParameters,      // input params
@@ -451,7 +451,7 @@ int main(int argc, char *argv[])
 	    logger.info("Failed to open input stream: %s", Pa_GetErrorText(err));
 		exit(-1);
 	}
-
+#endif
 	output_parameters.device = wmdev.default_dev;
 	if(output_parameters.device == paNoDevice) {
 		logger.info("No default output device.");
