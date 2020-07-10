@@ -16,9 +16,13 @@
 
 #define VIRTUAL_DEVICE "Virtual"
 
+#ifndef PCM_FRAME
+#define PCM_FRAME                640    // Frame for incomming PCM buffer stream from decoded opus data.
+#endif
+
 int sample_rate = 16000;
 const int NUM_CHANNELS = 1;
-const int FRAMES_PER_BUFFER = 1024;
+const int FRAMES_PER_BUFFER = PCM_FRAME;
 
 static log4cpp::Appender *appender = new log4cpp::OstreamAppender("console", &std::cout);
 static log4cpp::Category& logger = log4cpp::Category::getRoot();
