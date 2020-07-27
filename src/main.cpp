@@ -127,6 +127,7 @@ struct PaData {
  * @param  userData        circular buffer
  * @return                 PaStreamCallbackResult, paContinue usually
  */
+#ifndef INPUT_STREAM_DISABLED
 static int paRecordCallback(const void *inputBuffer,
                             void *outputBuffer,
                             unsigned long framesPerBuffer,
@@ -155,7 +156,7 @@ static int paRecordCallback(const void *inputBuffer,
 
 	return result;
 }
-
+#endif // INPUT_STREAM_DISABLED
 /**
  * Output callback for PortAudio engine. This gets called when audio output is
  * ready to be sent. This will simply consume data from a ring buffer that we
@@ -438,7 +439,6 @@ int main(int argc, char *argv[])
 	logger.info("inputParameters.suggestedLatency: %.4f", inputParameters.suggestedLatency);
     printf("inputParameters.suggestedLatency: %.4f\n", inputParameters.suggestedLatency);
 
-#ifndef INPUT_STREAM_DISABLED
 	err = Pa_OpenStream(&input_stream,         // the input stream
 						&inputParameters,      // input params
 						NULL,                  // output params
@@ -447,7 +447,7 @@ int main(int argc, char *argv[])
 						paClipOff,             // we won't output out of range samples so don't bother clipping them
 						paRecordCallback,      // PortAudio callback function
 						&data);                // data pointer
-#endif // INPUT_STREAM_DISABLED
+
 	logger.info("inputParameters defaultHighOutputLatency: %.4f", Pa_GetDeviceInfo(inputParameters.device)->defaultHighOutputLatency);
     printf("inputParameters defaultHighOutputLatency: %.4f\n\n", Pa_GetDeviceInfo(inputParameters.device)->defaultHighOutputLatency);
 
