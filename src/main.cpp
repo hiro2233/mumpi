@@ -291,7 +291,7 @@ int main(int argc, char *argv[])
 	};
 
 #ifdef __MSYS__
-	double output_delay = 0.1;
+	double output_delay = 0.4;
 #else
     double output_delay = 0.02;
 #endif
