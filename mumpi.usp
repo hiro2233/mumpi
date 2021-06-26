@@ -181,7 +181,11 @@
 				<Linker>
 					<Add option="-s" />
 					<Add option="-pthread" />
-					<Add library="boost_system" />
+					<Add option="-Wl,--gc-sections" />
+					<Add library="mumlib" />
+					<Add library="protobuf" />
+					<Add library="opus" />
+					<Add library="speexdsp" />
 					<Add directory="deps/mumlib/bin/Release" />
 				</Linker>
 			</Target>
@@ -201,6 +205,7 @@
 				<Linker>
 					<Add option="-s" />
 					<Add option="-pthread" />
+					<Add option="-Wl,--gc-sections" />
 					<Add directory="deps/mumlib/bin/Release" />
 				</Linker>
 			</Target>
@@ -243,9 +248,21 @@
 			<Add option="-Wno-trigraphs" />
 			<Add option="-fexceptions" />
 			<Add option="-msse" />
+			<Add option="-ffunction-sections" />
+			<Add option="-fdata-sections" />
+			<Add option="-DBOOST_ASIO_DISABLE_BOOST_ARRAY=1" />
+			<Add option="-DBOOST_ASIO_DISABLE_BOOST_CHRONO=1" />
+			<Add option="-DBOOST_ASIO_DISABLE_BOOST_LIMITS=1" />
+			<Add option="-DBOOST_ASIO_DISABLE_BOOST_REGEX=1" />
+			<Add option="-DBOOST_ASIO_DISABLE_BOOST_STATIC_CONSTANT=1" />
+			<Add option="-DBOOST_ASIO_DISABLE_BOOST_ASSERT=1" />
+			<Add option="-DBOOST_ASIO_DISABLE_BOOST_THROW_EXCEPTION=1" />
+			<Add option="-DBOOST_ASIO_DISABLE_BOOST_WORKAROUND=1" />
+			<Add option="-DBOOST_ERROR_CODE_HEADER_ONLY" />
 			<Add directory="include" />
 			<Add directory="deps/mumlib/include" />
 			<Add directory="$(HOME)/boost_1_72_0" />
+			<Add directory="../../../wimic" />
 		</Compiler>
 		<Linker>
 			<Add library="log4cpp" />
@@ -264,9 +281,6 @@
 		<Unit filename="src/RingBuffer.cpp" />
 		<Unit filename="src/main.cpp" />
 		<Extensions>
-			<code_completion />
-			<envvars />
-			<debugger />
 			<lib_finder disable_auto="1" />
 		</Extensions>
 	</Project>
