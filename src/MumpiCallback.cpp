@@ -12,7 +12,9 @@ MumpiCallback::MumpiCallback(std::shared_ptr<RingBuffer<int16_t>> out_buf) :
 }
 
 MumpiCallback::~MumpiCallback() {
+#ifdef __LIB_URUSSTUDIO__
     wimic_callback.stop();
+#endif // __LIB_URUSSTUDIO__
 }
 
 /**
